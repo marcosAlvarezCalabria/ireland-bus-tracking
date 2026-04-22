@@ -3,6 +3,7 @@ import express from "express";
 import helmet from "helmet";
 
 import { env } from "./config/env.js";
+import stopsRouter from "./presentation/stops-router.js";
 
 void env;
 
@@ -18,5 +19,7 @@ app.get("/health", (_req, res) => {
     timestamp: new Date().toISOString()
   });
 });
+
+app.use("/stops", stopsRouter);
 
 export default app;
