@@ -3,6 +3,7 @@ import express from "express";
 import helmet from "helmet";
 
 import { env } from "./config/env.js";
+import arrivalsRouter from "./presentation/arrivals-router.js";
 import stopsRouter from "./presentation/stops-router.js";
 
 void env;
@@ -21,5 +22,6 @@ app.get("/health", (_req, res) => {
 });
 
 app.use("/stops", stopsRouter);
+app.use("/arrivals", arrivalsRouter);
 
 export default app;
