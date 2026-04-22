@@ -1,47 +1,139 @@
-# Ireland Bus Tracking
+# 🚌 IRELAND BUS TRACKING
+**Informe Técnico del Proyecto — v3**
+TFM · Master en Software Development con IA · BIG School
+Marcos Álvarez Calabria · Abril 2026
+Desarrollado con: OpenAI Codex (implementación) + Claude (arquitectura y validación)
 
-Ireland Bus Tracking is a real-time and predictive public bus tracking project for Ireland.
+## 1. Resumen Ejecutivo
+Ireland Bus Tracking es una Progressive Web App (PWA) que predice los retrasos de los autobuses urbanos de Irlanda utilizando datos en tiempo real de la API de Transport for Ireland (TFI) y un modelo de machine learning entrenado con histórico propio.
+El proyecto comienza con Galway como ciudad MVP y está diseñado para expandirse progresivamente a otras ciudades irlandesas (Dublin, Cork, etc.).
+El problema es real y documentado: los autobuses en Galway llegan frecuentemente con 20-40 minutos de retraso, y las soluciones actuales (Google Maps, TFI Live) solo muestran datos instantáneos sin predicción inteligente.
 
-The first implementation focuses on Galway as the MVP city. The system is designed to start with one city, validate the data pipeline and prediction strategy, and then expand progressively to other Irish cities.
+| Aspecto | Detalle |
+| --- | --- |
+| Problema | Retrasos impredecibles de 20-40 min en buses de Galway city |
+| Solución | PWA con predicción ML sobre datos GTFS-RT de TFI |
+| Referente | OneBusAway (Seattle) — open source Apache 2.0 |
+| Herramienta de desarrollo | OpenAI Codex (implementación) + Claude (arquitectura y validación) |
+| Infraestructura | VPS Hostinger KVM2 existente — 2 vCPUs, 8GB RAM, 100GB NVMe |
+| Viabilidad TFM | 90% |
+| Viabilidad comercial | 35-40% — BusConnects Galway llega en 2027 |
 
-## MVP Scope
+## 2. Repositorio
+GitHub: https://github.com/marcosAlvarezCalabria/ireland-bus-tracking
 
-The initial version targets Galway city buses using Transport for Ireland data.
+## 3. Arquitectura — Clean Architecture estricta
+- **domain/** → Entidades puras e interfaces. Cero dependencias externas.
+- **application/** → Casos de uso. Solo depende de interfaces del domain.
+- **infrastructure/** → Implementaciones concretas (BD, APIs externas).
+- **presentation/** → Controllers Express, componentes React.
 
-Current goals:
+## 4. Stack
+| Capa | Tecnología |
+| --- | --- |
+| Scraper | Node.js + TypeScript → TimescaleDB |
+| Backend API | Node.js + Express + TypeScript |
+| ML Service | Python + FastAPI + XGBoost |
+| Frontend | React 18 + TypeScript + Vite + Tailwind CSS + Leaflet.js |
+| Tests | Vitest + Supertest + pytest |
+| Base de datos | PostgreSQL 16 + TimescaleDB |
 
-- collect and store real-time GTFS-RT bus data
-- analyze the first collected historical dataset
-- build a simple baseline for delay and arrival estimation
-- prepare the architecture for future machine learning models
-- create a PWA that users can open on mobile to track buses and expected arrivals
+## 5. Fuente de Datos
+API de Transport for Ireland (TFI) — developer.nationaltransport.ie
 
-## Current Data Status
+| Feed | Frecuencia TFI | Contenido |
+| --- | --- | --- |
+| GTFS estático | Cada pocos días | Rutas, paradas, horarios teóricos |
+| GTFS-RT Vehicle Positions | Cada 30s | Posición GPS en tiempo real |
+| GTFS-RT Trip Updates | Cada 30s | Retrasos en tiempo real |
 
-The project currently has around 4 days of collected bus data.
+Nota: TFI actualiza sus feeds cada 30 segundos. Nuestro scraper consulta esos feeds cada 60 segundos respetando el rate limit de la API.
 
-This is enough to validate ingestion, database structure, route coverage, and initial exploratory analysis. It is not yet enough for a reliable predictive model, so the first modelling phase should focus on simple baselines and data quality checks.
+## 6. Infraestructura VPS
+Hostinger KVM2 — openclaw-user
+DB: `postgresql://openclaw_admin:openclaw2026@localhost:5432/galway_bus`
 
-As more historical data is collected, the project will move towards training machine learning models that can predict:
+| Proceso | RAM estimada | Gestor |
+| --- | --- | --- |
+| OpenClaw (existente) | ~200 MB | PM2 |
+| PostgreSQL + TimescaleDB | ~300 MB | Systemd |
+| GTFS Collector | ~100 MB | PM2 |
+| Backend API | ~150 MB | PM2 |
+| ML Service | ~300 MB | PM2 |
+| Nginx | ~50 MB | Systemd |
+| **TOTAL** | **~1.1 GB** | de 8GB disponibles |
 
-- estimated arrival time at a stop
-- expected delay by route, stop, day, and time
-- future vehicle position over a short time window
+## 7. Reglas críticas del servidor
+- NUNCA añadir ON CONFLICT en inserts de TimescaleDB
+- NUNCA insertar más de 9000 rows en una sola query
+- NUNCA bajar POLL_INTERVAL_MS por debajo de 60000
+- NUNCA tocar la base de datos metrics ni procesos de OpenClaw
 
-## Prediction Strategy
+## 8. Estado actual — 22 Abril 2026
 
-The main prediction engine should use machine learning models designed for time, location, and transport data rather than a language model.
+✅ **Fase 1 — Recopilación de datos (COMPLETADA)**
+- PostgreSQL 16 + TimescaleDB instalado y tuneado en VPS
+- Base de datos `galway_bus` con 3 tablas: `stops`, `raw_positions`, `trip_updates`
+- Scraper GTFS-RT funcionando en PM2, polling cada 60s
+- ~275.000 posiciones y ~1.28M actualizaciones de retraso acumuladas
+- 7 tests en verde
 
-Recommended future models include:
+✅ **Fase 2 — Backend API (COMPLETADA)**
+Estructura: `apps/backend/` — Node.js + Express + TypeScript + Clean Architecture
+Endpoints implementados:
+| Endpoint | Descripción | Estado |
+| --- | --- | --- |
+| `GET /health` | Health check | ✅ Real |
+| `GET /stops?lat=&lng=&radius=` | Paradas cercanas (Haversine) | ✅ Real |
+| `GET /arrivals/:stopId` | Llegadas en tiempo real desde TimescaleDB | ✅ Real |
+| `GET /prediction/:stopId/:routeId` | Predicción de retraso ML | 🔶 Placeholder |
 
-- XGBoost or LightGBM for delay and ETA prediction
-- geospatial sequence models for short-term vehicle position prediction
-- GTFS route and shape data for map matching and route-aware predictions
+Tests: 11/11 en verde (Vitest + Supertest)
+Seguridad: Helmet, CORS, validación Zod en env, fail-fast al arranque
+Pendiente: Despliegue en VPS (PM2 + Nginx)
 
-A language model can be added later as an assistant layer, for example to answer user questions such as "when will the 409 arrive at Eyre Square?", but it should not be the core prediction engine.
+## 9. Plan de desarrollo — Fases pendientes
 
-## Long-Term Vision
+**Fase 3 — Despliegue backend en VPS**
+- Configurar PM2 ecosystem.config.js
+- Configurar Nginx como reverse proxy
+- Variables de entorno en producción
 
-Ireland Bus Tracking starts in Galway and expands city by city.
+**Fase 4 — Modelo ML**
+- EDA sobre histórico acumulado
+- Feature engineering (hora, día, ruta, parada)
+- Entrenamiento XGBoost + evaluación MAE/RMSE
+- FastAPI para inferencia
+- Conectar con endpoint `/prediction`
 
-The long-term goal is to provide a national bus tracking and prediction platform that combines official real-time transport data, historical delay patterns, and user-friendly mobile access.
+**Fase 5 — Frontend React PWA**
+- Scaffold React + TypeScript + Vite + Tailwind
+- Mapa con Leaflet.js
+- ArrivalBoard (tiempos reales vs predichos)
+- Sistema de favoritos
+- Service Worker + modo offline
+
+## 10. Estructura del repositorio
+```text
+ireland-bus-tracking/
+├── AGENTS.md
+├── apps/
+│   ├── frontend/          React + TypeScript + Vite (PWA) — pendiente
+│   └── backend/           Node.js + Express + TypeScript ✅
+│       ├── src/
+│       │   ├── domain/         Stop, Arrival, Prediction
+│       │   ├── application/    GetNearbyStops, GetArrivals, GetPrediction
+│       │   ├── infrastructure/ PostgresStopRepo, PostgresArrivalRepo, StubPredictionRepo, db.ts
+│       │   ├── presentation/   stops-router, arrivals-router, prediction-router
+│       │   ├── config/         env.ts (Zod)
+│       │   └── server.ts / index.ts
+│       └── tests/
+├── services/
+│   ├── gtfs-collector/    Scraper TypeScript → TimescaleDB ✅
+│   └── ml-service/        Python + FastAPI + XGBoost — pendiente
+├── db/
+├── docs/
+└── deploy/
+```
+
+Ireland Bus Tracking · Marcos Álvarez Calabria · Abril 2026 · v3
