@@ -1,0 +1,9 @@
+{
+  "name": "Ireland Bus Tracking",
+  "short_name": "IBT",
+  "theme_color": "#78aa36",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "start_url": "/",
+  "scope": "/"
+}
