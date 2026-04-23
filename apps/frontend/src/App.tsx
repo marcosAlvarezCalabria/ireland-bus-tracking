@@ -1,14 +1,17 @@
-import { BrowserRouter } from "react-router-dom";
-import { useTranslation } from "react-i18next";
+import "leaflet/dist/leaflet.css";
+
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+
+import { HomePage } from "./pages/HomePage";
 
 export default function App() {
-  const { t } = useTranslation();
-
   return (
-    <BrowserRouter>
-      <main className="min-h-screen bg-white text-slate-950 dark:bg-slate-950 dark:text-white">
-        <h1>{t("app_name")}</h1>
-      </main>
+    <BrowserRouter
+      future={{ v7_relativeSplatPath: true, v7_startTransition: true }}
+    >
+      <Routes>
+        <Route element={<HomePage />} path="/" />
+      </Routes>
     </BrowserRouter>
   );
 }
