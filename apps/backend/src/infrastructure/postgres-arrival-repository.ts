@@ -6,7 +6,8 @@ interface ArrivalRow {
   trip_id: string;
   route_id: string;
   stop_id: string;
-  arrival_time: Date;
+  scheduled_arrival: Date;
+  predicted_arrival: Date;
   delay_seconds: number;
 }
 
@@ -15,11 +16,11 @@ export class PostgresArrivalRepository implements ArrivalRepository {
 
   public async findByStopId(stopId: string): Promise<Arrival[]> {
     const query = `
-      SELECT trip_id, route_id, stop_id, arrival_time, delay_seconds
+      SELECT trip_id, route_id, stop_id, scheduled_arrival, predicted_arrival, delay_seconds
       FROM trip_updates
       WHERE stop_id = $1
-        AND arrival_time > NOW()
-      ORDER BY arrival_time ASC
+        AND scheduled_arrival > NOW()
+      ORDER BY scheduled_arrival ASC
       LIMIT 10
     `;
 
@@ -27,10 +28,8 @@ export class PostgresArrivalRepository implements ArrivalRepository {
 
     return result.rows.map((row) => {
       const delaySeconds = row.delay_seconds;
-      const scheduledArrival = row.arrival_time;
-      const predictedArrival = new Date(
-        scheduledArrival.getTime() + delaySeconds * 1000
-      );
+      const scheduledArrival = row.scheduled_arrival;
+      const predictedArrival = row.predicted_arrival;
 
       return {
         tripId: row.trip_id,
