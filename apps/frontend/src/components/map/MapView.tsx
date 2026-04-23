@@ -19,9 +19,9 @@ L.Icon.Default.mergeOptions({ iconRetinaUrl, iconUrl, shadowUrl });
 
 const stopMarkerIcon = L.divIcon({
   className: "",
-  html: '<span style="display:block;width:18px;height:18px;border-radius:9999px;background:#78aa36;border:3px solid #ffffff;box-shadow:0 2px 8px rgba(0,0,0,0.35);"></span>',
-  iconAnchor: [9, 9],
-  iconSize: [18, 18]
+  html: '<span style="display:flex;width:24px;height:24px;align-items:center;justify-content:center;border-radius:9999px;background:#e11d48;border:3px solid #ffffff;box-shadow:0 2px 8px rgba(0,0,0,0.5);font-size:12px;line-height:1;">🚌</span>',
+  iconAnchor: [12, 12],
+  iconSize: [24, 24]
 });
 
 interface MapViewProps {
@@ -58,8 +58,8 @@ export function MapView({
     >
       <RecenterMap lat={userLocation.lat} lng={userLocation.lng} />
       <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        attribution='&copy; <a href="https://stadiamaps.com/">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        url="https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png"
       />
       <CircleMarker
         center={[userLocation.lat, userLocation.lng]}
