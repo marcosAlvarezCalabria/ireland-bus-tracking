@@ -1,6 +1,13 @@
+import L from "leaflet";
+import iconRetinaUrl from "leaflet/dist/images/marker-icon-2x.png";
+import iconUrl from "leaflet/dist/images/marker-icon.png";
+import shadowUrl from "leaflet/dist/images/marker-shadow.png";
 import { CircleMarker, MapContainer, Marker, TileLayer, Tooltip } from "react-leaflet";
 
 import type { Stop } from "../../types";
+
+delete (L.Icon.Default.prototype as { _getIconUrl?: unknown })._getIconUrl;
+L.Icon.Default.mergeOptions({ iconRetinaUrl, iconUrl, shadowUrl });
 
 interface MapViewProps {
   userLocation: {
