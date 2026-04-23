@@ -19,7 +19,7 @@ L.Icon.Default.mergeOptions({ iconRetinaUrl, iconUrl, shadowUrl });
 
 const stopMarkerIcon = L.divIcon({
   className: "",
-  html: '<span style="display:flex;width:24px;height:24px;align-items:center;justify-content:center;border-radius:9999px;background:#e11d48;border:3px solid #ffffff;box-shadow:0 2px 8px rgba(0,0,0,0.5);font-size:12px;line-height:1;">🚌</span>',
+  html: '<span style="display:block;width:24px;height:24px;border-radius:9999px;background:#e11d48;border:3px solid #ffffff;box-shadow:0 2px 8px rgba(0,0,0,0.5);"></span>',
   iconAnchor: [12, 12],
   iconSize: [24, 24]
 });
