@@ -1,0 +1,17 @@
+{
+  "name": "ireland-bus-tracking",
+  "version": "1.0.0",
+  "scripts": {
+    "seed:stops": "ts-node db/seeds/import-stops.ts"
+  },
+  "dependencies": {
+    "csv-parse": "^5.5.6",
+    "pg": "^8.11.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/pg": "^8.11.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.0.0"
+  }
+}
