@@ -1,5 +1,6 @@
 import cors from "cors";
 import express from "express";
+import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 
 import { env } from "./config/env.js";
@@ -10,9 +11,16 @@ import stopsRouter from "./presentation/stops-router.js";
 void env;
 
 const app = express();
+const globalRateLimit = rateLimit({
+  windowMs: 60_000,
+  limit: 60,
+  standardHeaders: true,
+  legacyHeaders: false
+});
 
 app.use(helmet());
 app.use(cors());
+app.use(globalRateLimit);
 app.use(express.json());
 
 app.get("/health", (_req, res) => {
