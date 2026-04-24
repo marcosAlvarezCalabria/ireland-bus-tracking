@@ -12,4 +12,10 @@ export interface StopRepository {
     lng: number,
     radiusMeters: number
   ): Promise<Stop[]>;
+  findInBounds(
+    minLat: number,
+    maxLat: number,
+    minLng: number,
+    maxLng: number
+  ): Promise<Stop[]>;
 }

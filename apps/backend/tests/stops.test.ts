@@ -15,17 +15,21 @@ const mockStops: Stop[] = [
 ];
 
 const findNearbyMock = vi.fn();
+const findInBoundsMock = vi.fn();
 
 vi.mock("../src/infrastructure/postgres-stop-repository.js", () => ({
   PostgresStopRepository: vi.fn().mockImplementation(() => ({
-    findNearby: findNearbyMock
+    findNearby: findNearbyMock,
+    findInBounds: findInBoundsMock
   }))
 }));
 
 describe("GET /stops", () => {
   beforeEach(() => {
     findNearbyMock.mockReset();
+    findInBoundsMock.mockReset();
     findNearbyMock.mockResolvedValue(mockStops);
+    findInBoundsMock.mockResolvedValue(mockStops);
   });
 
   it("returns nearby stops for valid coordinates", async () => {
@@ -56,5 +60,24 @@ describe("GET /stops", () => {
 
     expect(response.status).toBe(400);
     expect(response.body.error).toBe("Invalid coordinates");
+  });
+
+  it("returns stops for valid bounds", async () => {
+    const response = await request(app).get(
+      "/stops?minLat=53.26&maxLat=53.28&minLng=-9.06&maxLng=-9.04"
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual(mockStops);
+    expect(findInBoundsMock).toHaveBeenCalledWith(53.26, 53.28, -9.06, -9.04);
+  });
+
+  it("returns 400 when bounds are invalid", async () => {
+    const response = await request(app).get(
+      "/stops?minLat=53.28&maxLat=53.26&minLng=-9.06&maxLng=-9.04"
+    );
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toBe("Invalid bounds");
   });
 });

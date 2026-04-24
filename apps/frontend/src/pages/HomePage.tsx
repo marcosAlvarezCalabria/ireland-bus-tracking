@@ -1,37 +1,73 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { MapView } from "../components/map/MapView";
 import { StopPanel } from "../components/stops/StopPanel";
 import { useGeolocation } from "../hooks/useGeolocation";
-import { getNearbyStops } from "../services/api";
+import { getStopsInBounds } from "../services/api";
 import type { Stop } from "../types";
+
+interface MapBounds {
+  minLat: number;
+  maxLat: number;
+  minLng: number;
+  maxLng: number;
+}
 
 export function HomePage() {
   const location = useGeolocation();
   const [stops, setStops] = useState<Stop[]>([]);
   const [selectedStop, setSelectedStop] = useState<Stop | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [bounds, setBounds] = useState<MapBounds | null>(null);
+  const debounceRef = useRef<number | null>(null);
 
   useEffect(() => {
-    if (location.loading) {
+    if (bounds === null) {
       return;
     }
 
-    void getNearbyStops(location.lat, location.lng)
-      .then((nearbyStops) => {
-        setStops(nearbyStops);
-        setError(null);
-      })
-      .catch((error: unknown) => {
-        setError(error instanceof Error ? error.message : "Unable to load stops");
-        setStops([]);
-      });
-  }, [location.lat, location.lng, location.loading]);
+    if (debounceRef.current !== null) {
+      window.clearTimeout(debounceRef.current);
+    }
+
+    debounceRef.current = window.setTimeout(() => {
+      void getStopsInBounds(
+        bounds.minLat,
+        bounds.maxLat,
+        bounds.minLng,
+        bounds.maxLng
+      )
+        .then((visibleStops) => {
+          setStops(visibleStops);
+          setSelectedStop((currentSelectedStop) => {
+            if (currentSelectedStop === null) {
+              return null;
+            }
+
+            return (
+              visibleStops.find((stop) => stop.id === currentSelectedStop.id) ?? null
+            );
+          });
+          setError(null);
+        })
+        .catch((error: unknown) => {
+          setError(error instanceof Error ? error.message : "Unable to load stops");
+          setStops([]);
+        });
+    }, 300);
+
+    return () => {
+      if (debounceRef.current !== null) {
+        window.clearTimeout(debounceRef.current);
+      }
+    };
+  }, [bounds]);
 
   return (
     <main className="flex min-h-screen flex-col bg-slate-100 text-slate-950 dark:bg-slate-950 dark:text-white">
       <section className="relative h-[60vh]">
         <MapView
+          onBoundsChange={setBounds}
           onSelectStop={setSelectedStop}
           selectedStopId={selectedStop?.id ?? null}
           stops={stops}

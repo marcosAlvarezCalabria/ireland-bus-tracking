@@ -52,4 +52,40 @@ export class PostgresStopRepository implements StopRepository {
       distance: Number(row.distance)
     }));
   }
+
+  public async findInBounds(
+    minLat: number,
+    maxLat: number,
+    minLng: number,
+    maxLng: number
+  ): Promise<Stop[]> {
+    const query = `
+      SELECT
+        id,
+        name,
+        lat,
+        lng,
+        0 AS distance
+      FROM stops
+      WHERE lat BETWEEN $1 AND $2
+        AND lng BETWEEN $3 AND $4
+      ORDER BY name ASC
+      LIMIT 500
+    `;
+
+    const result = await this.pool.query<StopRow>(query, [
+      minLat,
+      maxLat,
+      minLng,
+      maxLng
+    ]);
+
+    return result.rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      lat: Number(row.lat),
+      lng: Number(row.lng),
+      distance: Number(row.distance)
+    }));
+  }
 }

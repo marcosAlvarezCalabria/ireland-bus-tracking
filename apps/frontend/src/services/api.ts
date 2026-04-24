@@ -26,6 +26,22 @@ export async function getNearbyStops(
   return fetchJson<Stop[]>(`${API_URL}/stops?${params.toString()}`);
 }
 
+export async function getStopsInBounds(
+  minLat: number,
+  maxLat: number,
+  minLng: number,
+  maxLng: number
+): Promise<Stop[]> {
+  const params = new URLSearchParams({
+    minLat: String(minLat),
+    maxLat: String(maxLat),
+    minLng: String(minLng),
+    maxLng: String(maxLng)
+  });
+
+  return fetchJson<Stop[]>(`${API_URL}/stops?${params.toString()}`);
+}
+
 export async function getArrivals(stopId: string): Promise<Arrival[]> {
   return fetchJson<Arrival[]>(
     `${API_URL}/arrivals/${encodeURIComponent(stopId)}`

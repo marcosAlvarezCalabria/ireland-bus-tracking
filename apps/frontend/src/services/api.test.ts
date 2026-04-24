@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { getArrivals, getNearbyStops } from "./api";
+import { getArrivals, getNearbyStops, getStopsInBounds } from "./api";
 
 describe("api service", () => {
   afterEach(() => {
@@ -51,5 +51,27 @@ describe("api service", () => {
 
     expect(result).toEqual(arrivals);
     expect(fetch).toHaveBeenCalledWith(expect.stringContaining("/arrivals/stop-1"));
+  });
+
+  it("fetches stops in bounds", async () => {
+    const stops = [
+      { id: "stop-1", name: "Eyre Square", lat: 53.2743, lng: -9.0491, distance: 0 }
+    ];
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve(stops)
+      })
+    );
+
+    const result = await getStopsInBounds(53.26, 53.28, -9.06, -9.04);
+
+    expect(result).toEqual(stops);
+    expect(fetch).toHaveBeenCalledWith(
+      expect.stringContaining(
+        "/stops?minLat=53.26&maxLat=53.28&minLng=-9.06&maxLng=-9.04"
+      )
+    );
   });
 });
