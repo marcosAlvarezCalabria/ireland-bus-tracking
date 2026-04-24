@@ -1,8 +1,8 @@
 import { Router } from "express";
 
 import { GetArrivals } from "../application/get-arrivals.js";
-import { pool } from "../infrastructure/db.js";
-import { PostgresArrivalRepository } from "../infrastructure/postgres-arrival-repository.js";
+import { env } from "../config/env.js";
+import { TfiArrivalRepository } from "../infrastructure/tfi-arrival-repository.js";
 
 const arrivalsRouter = Router();
 
@@ -10,7 +10,7 @@ arrivalsRouter.get("/:stopId", async (req, res) => {
   const stopId = req.params.stopId ?? "";
 
   try {
-    const repo = new PostgresArrivalRepository(pool);
+    const repo = new TfiArrivalRepository(env.TFI_API_KEY_RT);
     const getArrivals = new GetArrivals(repo);
     const arrivals = await getArrivals.execute(stopId);
 

@@ -3,7 +3,8 @@ import { z } from "zod";
 const envSchema = z.object({
   PORT: z.coerce.number().int().positive(),
   NODE_ENV: z.enum(["development", "test", "production"]),
-  DATABASE_URL: z.string().url()
+  DATABASE_URL: z.string().url(),
+  TFI_API_KEY_RT: z.string().min(1)
 });
 
 const result = envSchema.safeParse(process.env);

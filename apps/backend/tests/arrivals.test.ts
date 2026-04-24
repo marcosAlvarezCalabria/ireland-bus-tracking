@@ -18,8 +18,8 @@ const mockArrivals: Arrival[] = [
 
 const findByStopIdMock = vi.fn();
 
-vi.mock("../src/infrastructure/postgres-arrival-repository.js", () => ({
-  PostgresArrivalRepository: vi.fn().mockImplementation(() => ({
+vi.mock("../src/infrastructure/tfi-arrival-repository.js", () => ({
+  TfiArrivalRepository: vi.fn().mockImplementation(() => ({
     findByStopId: findByStopIdMock
   }))
 }));
@@ -61,7 +61,7 @@ describe("GET /arrivals/:stopId", () => {
   });
 
   it("returns 500 when the repository throws an unexpected error", async () => {
-    findByStopIdMock.mockRejectedValue(new Error("Database failed"));
+    findByStopIdMock.mockRejectedValue(new Error("TFI failed"));
 
     const response = await request(app).get("/arrivals/stop-123");
 
