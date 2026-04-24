@@ -11,6 +11,7 @@ import stopsRouter from "./presentation/stops-router.js";
 void env;
 
 const app = express();
+app.set("trust proxy", 1);
 const globalRateLimit = rateLimit({
   windowMs: 60_000,
   limit: 60,
