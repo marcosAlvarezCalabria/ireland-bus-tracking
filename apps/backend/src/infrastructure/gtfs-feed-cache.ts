@@ -2,6 +2,7 @@ import { transit_realtime } from "gtfs-realtime-bindings";
 
 import { env } from "../config/env.js";
 import type { Arrival } from "../domain/arrival.js";
+import { pool } from "./db.js";
 
 const TFI_TRIP_UPDATES_URL =
   "https://api.nationaltransport.ie/gtfsr/v2/TripUpdates";
@@ -67,14 +68,14 @@ class GtfsFeedCache {
       const sample = feed.entity[0]?.tripUpdate?.stopTimeUpdate?.[0];
       console.log("[DEBUG] entities:", feed.entity.length);
       console.log(
-        "[DEBUG] sample stu:",
+        `[DEBUG] tripId: ${feed.entity[0]?.tripUpdate?.trip?.tripId ?? "none"} stu:`,
         JSON.stringify({
           stopId: sample?.stopId,
           arrival: sample?.arrival,
           departure: sample?.departure
         })
       );
-      const nextCache = this.buildArrivalsByStopId(feed);
+      const nextCache = await this.buildArrivalsByStopId(feed);
       const nextStops = this.buildNextStopByTripId(feed);
 
       this.arrivalsByStopId = nextCache;
@@ -88,9 +89,9 @@ class GtfsFeedCache {
     }
   }
 
-  private buildArrivalsByStopId(
+  private async buildArrivalsByStopId(
     feed: transit_realtime.FeedMessage
-  ): Map<string, Arrival[]> {
+  ): Promise<Map<string, Arrival[]>> {
     const arrivalsByStopId = new Map<string, Arrival[]>();
     const now = Date.now();
 
@@ -114,17 +115,32 @@ class GtfsFeedCache {
             : typeof rawTime === "number"
               ? rawTime
               : rawTime.toNumber()) * 1000;
-        if (scheduled === 0 || scheduled < now) {
+        const rawDelay = stu.arrival?.delay;
+        const delay = rawDelay == null ? 0 : typeof rawDelay === "number" ? rawDelay : Number(rawDelay);
+
+        if (scheduled === 0) {
+          const tripId = trip?.tripId ?? "";
+          if (tripId.length === 0) { continue; }
+          try {
+            const result = await pool.query<{ arrival_time: string }>(
+              "SELECT arrival_time FROM stop_times WHERE trip_id = $1 AND stop_id = $2 LIMIT 1",
+              [tripId, stopId]
+            );
+            if (!result.rows[0]) { continue; }
+            const parts = result.rows[0].arrival_time.split(":").map(Number);
+            const today = new Date();
+            today.setHours(parts[0]!, parts[1]!, parts[2]!, 0);
+            const staticScheduled = today.getTime();
+            if (staticScheduled < now) { continue; }
+            const predicted = staticScheduled + delay * 1000;
+            const arrivals = arrivalsByStopId.get(stopId) ?? [];
+            arrivals.push({ tripId, routeId: trip?.routeId ?? "", stopId, scheduledArrival: new Date(staticScheduled).toISOString(), delaySeconds: delay, predictedArrival: new Date(predicted).toISOString(), status: this.getStatus(delay) });
+            arrivalsByStopId.set(stopId, arrivals);
+          } catch (e) { console.error("[DEBUG] DB error:", e); }
           continue;
         }
 
-        const rawDelay = stu.arrival?.delay;
-        const delay =
-          rawDelay == null
-            ? 0
-            : typeof rawDelay === "number"
-              ? rawDelay
-              : rawDelay.toNumber();
+        if (scheduled < now) { continue; }
         const predicted = scheduled + delay * 1000;
         const arrivals = arrivalsByStopId.get(stopId) ?? [];
 
