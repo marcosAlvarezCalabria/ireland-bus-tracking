@@ -65,16 +65,6 @@ class GtfsFeedCache {
 
       const buffer = await response.arrayBuffer();
       const feed = transit_realtime.FeedMessage.decode(new Uint8Array(buffer));
-      const sample = feed.entity[0]?.tripUpdate?.stopTimeUpdate?.[0];
-      console.log("[DEBUG] entities:", feed.entity.length);
-      console.log(
-        `[DEBUG] tripId: ${feed.entity[0]?.tripUpdate?.trip?.tripId ?? "none"} stu:`,
-        JSON.stringify({
-          stopId: sample?.stopId,
-          arrival: sample?.arrival,
-          departure: sample?.departure
-        })
-      );
       const nextCache = await this.buildArrivalsByStopId(feed);
       const nextStops = this.buildNextStopByTripId(feed);
 
@@ -108,39 +98,86 @@ class GtfsFeedCache {
           continue;
         }
 
-        const rawTime = stu.arrival?.time ?? stu.departure?.time;
+        const rawDelay = stu.arrival?.delay as
+          | number
+          | { toNumber(): number }
+          | null
+          | undefined;
+        const delay =
+          rawDelay == null
+            ? 0
+            : typeof rawDelay === "number"
+              ? rawDelay
+              : rawDelay.toNumber();
+        const rawTime = (stu.arrival?.time ?? stu.departure?.time) as
+          | number
+          | { toNumber(): number }
+          | null
+          | undefined;
         const scheduled =
           (rawTime == null
             ? 0
             : typeof rawTime === "number"
               ? rawTime
               : rawTime.toNumber()) * 1000;
-        const rawDelay = stu.arrival?.delay;
-        const delay = rawDelay == null ? 0 : typeof rawDelay === "number" ? rawDelay : Number(rawDelay);
 
         if (scheduled === 0) {
           const tripId = trip?.tripId ?? "";
-          if (tripId.length === 0) { continue; }
+          const stopId = stu.stopId ?? "";
+          if (tripId.length === 0 || stopId.length === 0) {
+            continue;
+          }
+
           try {
             const result = await pool.query<{ arrival_time: string }>(
               "SELECT arrival_time FROM stop_times WHERE trip_id = $1 AND stop_id = $2 LIMIT 1",
               [tripId, stopId]
             );
-            if (!result.rows[0]) { continue; }
-            const parts = result.rows[0].arrival_time.split(":").map(Number);
+
+            if (result.rows.length === 0) {
+              continue;
+            }
+
+            const row = result.rows[0];
+            if (row === undefined) {
+              continue;
+            }
+
+            const [h, m, s] = row.arrival_time.split(":").map(Number);
+            if (h === undefined || m === undefined || s === undefined) {
+              continue;
+            }
             const today = new Date();
-            today.setHours(parts[0]!, parts[1]!, parts[2]!, 0);
+            today.setHours(h, m, s, 0);
             const staticScheduled = today.getTime();
-            if (staticScheduled < now) { continue; }
+
+            if (staticScheduled < now) {
+              continue;
+            }
+
             const predicted = staticScheduled + delay * 1000;
             const arrivals = arrivalsByStopId.get(stopId) ?? [];
-            arrivals.push({ tripId, routeId: trip?.routeId ?? "", stopId, scheduledArrival: new Date(staticScheduled).toISOString(), delaySeconds: delay, predictedArrival: new Date(predicted).toISOString(), status: this.getStatus(delay) });
+            arrivals.push({
+              tripId,
+              routeId: trip?.routeId ?? "",
+              stopId,
+              scheduledArrival: new Date(staticScheduled).toISOString(),
+              delaySeconds: delay,
+              predictedArrival: new Date(predicted).toISOString(),
+              status: this.getStatus(delay)
+            });
             arrivalsByStopId.set(stopId, arrivals);
-          } catch (e) { console.error("[DEBUG] DB error:", e); }
+          } catch {
+            continue;
+          }
+
           continue;
         }
 
-        if (scheduled < now) { continue; }
+        if (scheduled < now) {
+          continue;
+        }
+
         const predicted = scheduled + delay * 1000;
         const arrivals = arrivalsByStopId.get(stopId) ?? [];
 
