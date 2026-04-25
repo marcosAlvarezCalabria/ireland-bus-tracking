@@ -97,12 +97,24 @@ class GtfsFeedCache {
           continue;
         }
 
-        const scheduled = Number(stu.arrival?.time ?? 0) * 1000;
+        const rawTime = stu.arrival?.time;
+        const scheduled =
+          (rawTime == null
+            ? 0
+            : typeof rawTime === "number"
+              ? rawTime
+              : rawTime.toNumber()) * 1000;
         if (scheduled < now) {
           continue;
         }
 
-        const delay = Number(stu.arrival?.delay ?? 0);
+        const rawDelay = stu.arrival?.delay;
+        const delay =
+          rawDelay == null
+            ? 0
+            : typeof rawDelay === "number"
+              ? rawDelay
+              : rawDelay.toNumber();
         const predicted = scheduled + delay * 1000;
         const arrivals = arrivalsByStopId.get(stopId) ?? [];
 
