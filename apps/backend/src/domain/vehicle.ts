@@ -6,5 +6,6 @@ export interface Vehicle {
   tripId: string;
   bearing: number;
   routeName: string;
+  routeShortName: string;
   nextStop: string;
 }

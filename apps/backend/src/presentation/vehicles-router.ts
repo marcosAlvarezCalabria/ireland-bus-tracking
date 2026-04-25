@@ -10,6 +10,7 @@ vehiclesRouter.get("/", (_req, res) => {
   const vehicles = gtfsVehicleCache.getAll().map((vehicle) => ({
     ...vehicle,
     routeName: gtfsStaticCache.getRouteName(vehicle.routeId),
+    routeShortName: gtfsStaticCache.getRouteShortName(vehicle.routeId),
     nextStop: gtfsFeedCache.getNextStop(vehicle.tripId)
   }));
 

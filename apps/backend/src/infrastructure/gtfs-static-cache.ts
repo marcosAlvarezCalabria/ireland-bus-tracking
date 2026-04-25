@@ -8,6 +8,7 @@ const ROUTES_FILE_PATHS = [
 
 class GtfsStaticCache {
   private routeNames = new Map<string, string>();
+  private routeShortNames = new Map<string, string>();
 
   public async load(): Promise<void> {
     const routesFile = await this.readRoutesFile();
@@ -15,6 +16,7 @@ class GtfsStaticCache {
 
     if (lines.length === 0) {
       this.routeNames = new Map();
+      this.routeShortNames = new Map();
       console.info("[static-cache] loaded 0 routes");
       return;
     }
@@ -22,6 +24,7 @@ class GtfsStaticCache {
     const headerLine = lines[0];
     if (headerLine === undefined) {
       this.routeNames = new Map();
+      this.routeShortNames = new Map();
       console.info("[static-cache] loaded 0 routes");
       return;
     }
@@ -32,6 +35,7 @@ class GtfsStaticCache {
     const routeLongNameIndex = headers.indexOf("route_long_name");
     const routeShortNameIndex = headers.indexOf("route_short_name");
     const routeNames = new Map<string, string>();
+    const routeShortNames = new Map<string, string>();
 
     for (const line of dataLines) {
       const fields = this.parseCsvLine(line);
@@ -47,15 +51,21 @@ class GtfsStaticCache {
         routeId,
         routeLongName.length > 0 ? routeLongName : routeShortName
       );
+      routeShortNames.set(routeId, routeShortName);
     }
 
     this.routeNames = routeNames;
+    this.routeShortNames = routeShortNames;
 
     console.info(`[static-cache] loaded ${routeNames.size} routes`);
   }
 
   public getRouteName(routeId: string): string {
     return this.routeNames.get(routeId) ?? "";
+  }
+
+  public getRouteShortName(routeId: string): string {
+    return this.routeShortNames.get(routeId) ?? "";
   }
 
   private async readRoutesFile(): Promise<string> {

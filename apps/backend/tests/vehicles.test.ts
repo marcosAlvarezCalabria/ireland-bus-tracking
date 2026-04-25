@@ -13,15 +13,18 @@ const mockVehicles: Vehicle[] = [
     tripId: "trip-123",
     bearing: 180,
     routeName: "",
+    routeShortName: "",
     nextStop: ""
   }
 ];
 
-const { getAllMock, getRouteNameMock, getNextStopMock } = vi.hoisted(() => ({
+const { getAllMock, getRouteNameMock, getRouteShortNameMock, getNextStopMock } =
+  vi.hoisted(() => ({
   getAllMock: vi.fn(),
   getRouteNameMock: vi.fn(),
+  getRouteShortNameMock: vi.fn(),
   getNextStopMock: vi.fn()
-}));
+  }));
 
 vi.mock("../src/infrastructure/gtfs-vehicle-cache.js", () => ({
   gtfsVehicleCache: {
@@ -31,7 +34,8 @@ vi.mock("../src/infrastructure/gtfs-vehicle-cache.js", () => ({
 
 vi.mock("../src/infrastructure/gtfs-static-cache.js", () => ({
   gtfsStaticCache: {
-    getRouteName: getRouteNameMock
+    getRouteName: getRouteNameMock,
+    getRouteShortName: getRouteShortNameMock
   }
 }));
 
@@ -45,9 +49,11 @@ describe("GET /vehicles", () => {
   beforeEach(() => {
     getAllMock.mockReset();
     getRouteNameMock.mockReset();
+    getRouteShortNameMock.mockReset();
     getNextStopMock.mockReset();
     getAllMock.mockReturnValue(mockVehicles);
     getRouteNameMock.mockReturnValue("Phoenix Park - Dun Laoghaire");
+    getRouteShortNameMock.mockReturnValue("46A");
     getNextStopMock.mockReturnValue("1234");
   });
 
@@ -59,6 +65,7 @@ describe("GET /vehicles", () => {
       {
         ...mockVehicles[0],
         routeName: "Phoenix Park - Dun Laoghaire",
+        routeShortName: "46A",
         nextStop: "1234"
       }
     ]);

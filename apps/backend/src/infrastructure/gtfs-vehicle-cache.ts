@@ -88,6 +88,7 @@ class GtfsVehicleCache {
         tripId: trip.tripId ?? "",
         bearing: Number(position.bearing ?? 0),
         routeName: "",
+        routeShortName: "",
         nextStop: ""
       });
     }
