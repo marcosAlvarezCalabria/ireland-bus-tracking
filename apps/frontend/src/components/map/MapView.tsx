@@ -2,7 +2,7 @@ import L from "leaflet";
 import iconRetinaUrl from "leaflet/dist/images/marker-icon-2x.png";
 import iconUrl from "leaflet/dist/images/marker-icon.png";
 import shadowUrl from "leaflet/dist/images/marker-shadow.png";
-import { useEffect } from "react";
+import { type ReactNode, useEffect } from "react";
 import {
   CircleMarker,
   MapContainer,
@@ -41,6 +41,7 @@ interface MapViewProps {
       maxLng: number;
     }
   ) => void;
+  children?: ReactNode;
 }
 
 function RecenterMap({ lat, lng }: { lat: number; lng: number }) {
@@ -90,7 +91,8 @@ export function MapView({
   stops,
   selectedStopId,
   onSelectStop,
-  onBoundsChange
+  onBoundsChange,
+  children
 }: MapViewProps) {
   return (
     <MapContainer
@@ -124,6 +126,7 @@ export function MapView({
           <Tooltip>{stop.name}</Tooltip>
         </Marker>
       ))}
+      {children}
     </MapContainer>
   );
 }

@@ -7,6 +7,7 @@ import { env } from "./config/env.js";
 import arrivalsRouter from "./presentation/arrivals-router.js";
 import predictionRouter from "./presentation/prediction-router.js";
 import stopsRouter from "./presentation/stops-router.js";
+import vehiclesRouter from "./presentation/vehicles-router.js";
 
 void env;
 
@@ -34,5 +35,6 @@ app.get("/health", (_req, res) => {
 app.use("/stops", stopsRouter);
 app.use("/arrivals", arrivalsRouter);
 app.use("/prediction", predictionRouter);
+app.use("/vehicles", vehiclesRouter);
 
 export default app;
