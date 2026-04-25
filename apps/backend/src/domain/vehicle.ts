@@ -3,5 +3,8 @@ export interface Vehicle {
   lat: number;
   lng: number;
   routeId: string;
+  tripId: string;
   bearing: number;
+  routeName: string;
+  nextStop: string;
 }

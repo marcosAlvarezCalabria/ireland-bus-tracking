@@ -85,7 +85,10 @@ class GtfsVehicleCache {
         lat: position.latitude,
         lng: position.longitude,
         routeId: trip.routeId ?? "",
-        bearing: Number(position.bearing ?? 0)
+        tripId: trip.tripId ?? "",
+        bearing: Number(position.bearing ?? 0),
+        routeName: "",
+        nextStop: ""
       });
     }
 

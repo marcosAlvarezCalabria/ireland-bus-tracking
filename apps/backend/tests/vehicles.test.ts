@@ -10,12 +10,17 @@ const mockVehicles: Vehicle[] = [
     lat: 53.3498,
     lng: -6.2603,
     routeId: "46A",
-    bearing: 180
+    tripId: "trip-123",
+    bearing: 180,
+    routeName: "",
+    nextStop: ""
   }
 ];
 
-const { getAllMock } = vi.hoisted(() => ({
-  getAllMock: vi.fn()
+const { getAllMock, getRouteNameMock, getNextStopMock } = vi.hoisted(() => ({
+  getAllMock: vi.fn(),
+  getRouteNameMock: vi.fn(),
+  getNextStopMock: vi.fn()
 }));
 
 vi.mock("../src/infrastructure/gtfs-vehicle-cache.js", () => ({
@@ -24,16 +29,38 @@ vi.mock("../src/infrastructure/gtfs-vehicle-cache.js", () => ({
   }
 }));
 
+vi.mock("../src/infrastructure/gtfs-static-cache.js", () => ({
+  gtfsStaticCache: {
+    getRouteName: getRouteNameMock
+  }
+}));
+
+vi.mock("../src/infrastructure/gtfs-feed-cache.js", () => ({
+  gtfsFeedCache: {
+    getNextStop: getNextStopMock
+  }
+}));
+
 describe("GET /vehicles", () => {
   beforeEach(() => {
     getAllMock.mockReset();
+    getRouteNameMock.mockReset();
+    getNextStopMock.mockReset();
     getAllMock.mockReturnValue(mockVehicles);
+    getRouteNameMock.mockReturnValue("Phoenix Park - Dun Laoghaire");
+    getNextStopMock.mockReturnValue("1234");
   });
 
-  it("returns vehicles", async () => {
+  it("returns enriched vehicles", async () => {
     const response = await request(app).get("/vehicles");
 
     expect(response.status).toBe(200);
-    expect(response.body).toEqual(mockVehicles);
+    expect(response.body).toEqual([
+      {
+        ...mockVehicles[0],
+        routeName: "Phoenix Park - Dun Laoghaire",
+        nextStop: "1234"
+      }
+    ]);
   });
 });

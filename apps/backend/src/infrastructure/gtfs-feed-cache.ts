@@ -9,6 +9,7 @@ const REFRESH_INTERVAL_MS = 30_000;
 
 class GtfsFeedCache {
   private arrivalsByStopId = new Map<string, Arrival[]>();
+  private nextStopByTripId = new Map<string, string>();
   private refreshTimer: NodeJS.Timeout | null = null;
   private refreshInFlight: Promise<void> | null = null;
 
@@ -28,6 +29,10 @@ class GtfsFeedCache {
 
   public getArrivals(stopId: string): Arrival[] {
     return [...(this.arrivalsByStopId.get(stopId) ?? [])];
+  }
+
+  public getNextStop(tripId: string): string {
+    return this.nextStopByTripId.get(tripId) ?? "";
   }
 
   private async refresh(): Promise<void> {
@@ -60,8 +65,10 @@ class GtfsFeedCache {
       const buffer = await response.arrayBuffer();
       const feed = transit_realtime.FeedMessage.decode(new Uint8Array(buffer));
       const nextCache = this.buildArrivalsByStopId(feed);
+      const nextStops = this.buildNextStopByTripId(feed);
 
       this.arrivalsByStopId = nextCache;
+      this.nextStopByTripId = nextStops;
 
       console.info(
         `GTFS cache refreshed: ${nextCache.size} stops, ${feed.entity.length} entities`
@@ -125,6 +132,39 @@ class GtfsFeedCache {
     }
 
     return arrivalsByStopId;
+  }
+
+  private buildNextStopByTripId(
+    feed: transit_realtime.FeedMessage
+  ): Map<string, string> {
+    const nextStopByTripId = new Map<string, string>();
+    const nowSeconds = Date.now() / 1000;
+
+    for (const entity of feed.entity) {
+      if (!entity.tripUpdate) {
+        continue;
+      }
+
+      const tripId = entity.tripUpdate.trip?.tripId ?? "";
+      if (tripId.length === 0) {
+        continue;
+      }
+
+      const nextStop = (entity.tripUpdate.stopTimeUpdate ?? []).find((stu) => {
+        const stopId = stu.stopId ?? "";
+        const arrivalTime = Number(stu.arrival?.time ?? 0);
+
+        return stopId.length > 0 && arrivalTime > nowSeconds;
+      });
+
+      if (!nextStop?.stopId) {
+        continue;
+      }
+
+      nextStopByTripId.set(tripId, nextStop.stopId);
+    }
+
+    return nextStopByTripId;
   }
 
   private getStatus(delaySeconds: number): Arrival["status"] {

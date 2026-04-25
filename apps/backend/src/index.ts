@@ -1,9 +1,11 @@
 import { env } from "./config/env.js";
 import { gtfsFeedCache } from "./infrastructure/gtfs-feed-cache.js";
+import { gtfsStaticCache } from "./infrastructure/gtfs-static-cache.js";
 import { gtfsVehicleCache } from "./infrastructure/gtfs-vehicle-cache.js";
 import app from "./server.js";
 
 async function bootstrap(): Promise<void> {
+  await gtfsStaticCache.load();
   await gtfsFeedCache.start();
   await gtfsVehicleCache.start();
 
