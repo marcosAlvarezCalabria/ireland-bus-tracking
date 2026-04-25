@@ -3,15 +3,7 @@ import iconRetinaUrl from "leaflet/dist/images/marker-icon-2x.png";
 import iconUrl from "leaflet/dist/images/marker-icon.png";
 import shadowUrl from "leaflet/dist/images/marker-shadow.png";
 import { type ReactNode, useEffect } from "react";
-import {
-  CircleMarker,
-  MapContainer,
-  Marker,
-  TileLayer,
-  Tooltip,
-  useMap,
-  useMapEvents
-} from "react-leaflet";
+import { CircleMarker, MapContainer, Marker, TileLayer, Tooltip, useMap } from "react-leaflet";
 
 import { StopPopup } from "./StopPopup";
 import type { Stop } from "../../types";
@@ -34,14 +26,6 @@ interface MapViewProps {
   stops: Stop[];
   selectedStopId: string | null;
   onSelectStop: (stop: Stop) => void;
-  onBoundsChange: (
-    bounds: {
-      minLat: number;
-      maxLat: number;
-      minLng: number;
-      maxLng: number;
-    }
-  ) => void;
   children?: ReactNode;
 }
 
@@ -55,44 +39,11 @@ function RecenterMap({ lat, lng }: { lat: number; lng: number }) {
   return null;
 }
 
-function BoundsWatcher({
-  onBoundsChange
-}: {
-  onBoundsChange: MapViewProps["onBoundsChange"];
-}) {
-  const map = useMapEvents({
-    moveend: () => {
-      const bounds = map.getBounds();
-
-      onBoundsChange({
-        minLat: bounds.getSouth(),
-        maxLat: bounds.getNorth(),
-        minLng: bounds.getWest(),
-        maxLng: bounds.getEast()
-      });
-    }
-  });
-
-  useEffect(() => {
-    const bounds = map.getBounds();
-
-    onBoundsChange({
-      minLat: bounds.getSouth(),
-      maxLat: bounds.getNorth(),
-      minLng: bounds.getWest(),
-      maxLng: bounds.getEast()
-    });
-  }, [map, onBoundsChange]);
-
-  return null;
-}
-
 export function MapView({
   userLocation,
   stops,
   selectedStopId,
   onSelectStop,
-  onBoundsChange,
   children
 }: MapViewProps) {
   return (
@@ -102,7 +53,6 @@ export function MapView({
       className="h-full min-h-[360px] w-full"
     >
       <RecenterMap lat={userLocation.lat} lng={userLocation.lng} />
-      <BoundsWatcher onBoundsChange={onBoundsChange} />
       <TileLayer
         attribution='&copy; <a href="https://stadiamaps.com/">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png"

@@ -15,7 +15,7 @@ const app = express();
 app.set("trust proxy", 1);
 const globalRateLimit = rateLimit({
   windowMs: 60_000,
-  limit: 60,
+  limit: 300,
   standardHeaders: true,
   legacyHeaders: false
 });

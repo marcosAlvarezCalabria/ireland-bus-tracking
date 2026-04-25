@@ -1,33 +1,23 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { MapView } from "../components/map/MapView";
 import { VehicleMarkers } from "../components/map/VehicleMarkers";
 import { StopPanel } from "../components/stops/StopPanel";
 import { useGeolocation } from "../hooks/useGeolocation";
-import { getStops, getStopsInBounds, getVehicles, type Vehicle } from "../services/api";
+import { getStops, getVehicles, type Vehicle } from "../services/api";
 import type { Stop } from "../types";
-
-interface MapBounds {
-  minLat: number;
-  maxLat: number;
-  minLng: number;
-  maxLng: number;
-}
 
 export function HomePage() {
   const location = useGeolocation();
   const [stops, setStops] = useState<Stop[]>([]);
   const [selectedStop, setSelectedStop] = useState<Stop | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [bounds, setBounds] = useState<MapBounds | null>(null);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
-  const hasLoadedInitialStops = useRef(false);
 
   useEffect(() => {
     void getStops()
       .then((allStops) => {
         setStops(allStops);
-        hasLoadedInitialStops.current = true;
         setSelectedStop((currentSelectedStop) => {
           if (currentSelectedStop === null) {
             return null;
@@ -42,29 +32,6 @@ export function HomePage() {
         setStops([]);
       });
   }, []);
-
-  useEffect(() => {
-    if (!hasLoadedInitialStops.current || bounds === null) {
-      return;
-    }
-
-    void getStopsInBounds(bounds.minLat, bounds.maxLat, bounds.minLng, bounds.maxLng)
-      .then((visibleStops) => {
-        setStops(visibleStops);
-        setSelectedStop((currentSelectedStop) => {
-          if (currentSelectedStop === null) {
-            return null;
-          }
-
-          return visibleStops.find((stop) => stop.id === currentSelectedStop.id) ?? null;
-        });
-        setError(null);
-      })
-      .catch((loadError: unknown) => {
-        setError(loadError instanceof Error ? loadError.message : "Unable to load stops");
-        setStops([]);
-      });
-  }, [bounds]);
 
   useEffect(() => {
     const loadVehicles = () => {
@@ -90,7 +57,6 @@ export function HomePage() {
     <main className="flex min-h-screen flex-col bg-slate-100 text-slate-950 dark:bg-slate-950 dark:text-white">
       <section className="relative h-[60vh]">
         <MapView
-          onBoundsChange={setBounds}
           onSelectStop={setSelectedStop}
           selectedStopId={selectedStop?.id ?? null}
           stops={stops}
