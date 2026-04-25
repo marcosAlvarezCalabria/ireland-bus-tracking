@@ -47,3 +47,15 @@ export async function getArrivals(stopId: string): Promise<Arrival[]> {
     `${API_URL}/arrivals/${encodeURIComponent(stopId)}`
   );
 }
+
+export interface Vehicle {
+  id: string;
+  lat: number;
+  lng: number;
+  routeId: string;
+  bearing: number;
+}
+
+export async function getVehicles(): Promise<Vehicle[]> {
+  return fetchJson<Vehicle[]>(`${API_URL}/vehicles`);
+}

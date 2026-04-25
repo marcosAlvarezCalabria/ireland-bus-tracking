@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 
 import { MapView } from "../components/map/MapView";
+import { VehicleMarkers } from "../components/map/VehicleMarkers";
 import { StopPanel } from "../components/stops/StopPanel";
 import { useGeolocation } from "../hooks/useGeolocation";
-import { getStopsInBounds } from "../services/api";
+import { getStopsInBounds, getVehicles, type Vehicle } from "../services/api";
 import type { Stop } from "../types";
 
 interface MapBounds {
@@ -19,6 +20,7 @@ export function HomePage() {
   const [selectedStop, setSelectedStop] = useState<Stop | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [bounds, setBounds] = useState<MapBounds | null>(null);
+  const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const debounceRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -63,6 +65,26 @@ export function HomePage() {
     };
   }, [bounds]);
 
+  useEffect(() => {
+    const loadVehicles = () => {
+      void getVehicles()
+        .then((activeVehicles) => {
+          setVehicles(activeVehicles);
+        })
+        .catch(() => {
+          setVehicles([]);
+        });
+    };
+
+    loadVehicles();
+
+    const intervalId = window.setInterval(loadVehicles, 30_000);
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, []);
+
   return (
     <main className="flex min-h-screen flex-col bg-slate-100 text-slate-950 dark:bg-slate-950 dark:text-white">
       <section className="relative h-[60vh]">
@@ -72,7 +94,9 @@ export function HomePage() {
           selectedStopId={selectedStop?.id ?? null}
           stops={stops}
           userLocation={{ lat: location.lat, lng: location.lng }}
-        />
+        >
+          <VehicleMarkers vehicles={vehicles} />
+        </MapView>
         {location.loading ? (
           <div className="absolute left-4 top-4 rounded-md bg-white px-4 py-2 font-semibold shadow dark:bg-slate-900">
             Loading...
