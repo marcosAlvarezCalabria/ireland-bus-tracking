@@ -26,6 +26,10 @@ export async function getNearbyStops(
   return fetchJson<Stop[]>(`${API_URL}/stops?${params.toString()}`);
 }
 
+export async function getStops(): Promise<Stop[]> {
+  return fetchJson<Stop[]>(`${API_URL}/stops`);
+}
+
 export async function getStopsInBounds(
   minLat: number,
   maxLat: number,

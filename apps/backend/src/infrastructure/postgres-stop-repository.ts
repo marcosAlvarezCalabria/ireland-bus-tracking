@@ -13,6 +13,29 @@ interface StopRow {
 export class PostgresStopRepository implements StopRepository {
   public constructor(private pool: pg.Pool) {}
 
+  public async findAll(): Promise<Stop[]> {
+    const query = `
+      SELECT
+        id,
+        name,
+        lat,
+        lng,
+        0 AS distance
+      FROM stops
+      ORDER BY name ASC
+    `;
+
+    const result = await this.pool.query<StopRow>(query);
+
+    return result.rows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      lat: Number(row.lat),
+      lng: Number(row.lng),
+      distance: Number(row.distance)
+    }));
+  }
+
   public async findNearby(
     lat: number,
     lng: number,

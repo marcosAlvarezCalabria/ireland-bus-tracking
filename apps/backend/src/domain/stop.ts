@@ -7,6 +7,7 @@ export interface Stop {
 }
 
 export interface StopRepository {
+  findAll(): Promise<Stop[]>;
   findNearby(
     lat: number,
     lng: number,

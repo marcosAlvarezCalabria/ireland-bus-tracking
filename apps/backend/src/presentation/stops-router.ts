@@ -37,7 +37,8 @@ stopsRouter.get("/", async (req, res) => {
     const lng = Number.parseFloat(String(req.query.lng ?? ""));
 
     if (Number.isNaN(lat) || Number.isNaN(lng)) {
-      res.status(400).json({ error: "Invalid coordinates" });
+      const stops = await repo.findAll();
+      res.status(200).json(stops);
       return;
     }
 
