@@ -21,10 +21,7 @@ export function HomePage() {
       ? stops
       : stops.filter((stop) =>
           stop.routes
-            .replace(/[{}]/g, "")
-            .split(",")
             .map((route) => route.trim().toLowerCase())
-            .filter((route) => route.length > 0)
             .includes(normalizedRouteQuery)
         );
   const filteredVehicles =
