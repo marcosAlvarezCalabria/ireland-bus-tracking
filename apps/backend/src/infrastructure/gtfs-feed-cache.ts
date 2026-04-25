@@ -64,6 +64,16 @@ class GtfsFeedCache {
 
       const buffer = await response.arrayBuffer();
       const feed = transit_realtime.FeedMessage.decode(new Uint8Array(buffer));
+      const sample = feed.entity[0]?.tripUpdate?.stopTimeUpdate?.[0];
+      console.log("[DEBUG] entities:", feed.entity.length);
+      console.log(
+        "[DEBUG] sample stu:",
+        JSON.stringify({
+          stopId: sample?.stopId,
+          arrival: sample?.arrival,
+          departure: sample?.departure
+        })
+      );
       const nextCache = this.buildArrivalsByStopId(feed);
       const nextStops = this.buildNextStopByTripId(feed);
 
@@ -97,14 +107,14 @@ class GtfsFeedCache {
           continue;
         }
 
-        const rawTime = stu.arrival?.time;
+        const rawTime = stu.arrival?.time ?? stu.departure?.time;
         const scheduled =
           (rawTime == null
             ? 0
             : typeof rawTime === "number"
               ? rawTime
               : rawTime.toNumber()) * 1000;
-        if (scheduled < now) {
+        if (scheduled === 0 || scheduled < now) {
           continue;
         }
 
