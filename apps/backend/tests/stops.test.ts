@@ -10,15 +10,18 @@ const mockStops: Stop[] = [
     name: "Eyre Square",
     lat: 53.2743,
     lng: -9.0491,
+    routes: "401,404,405",
     distance: 120
   }
 ];
 
+const findAllMock = vi.fn();
 const findNearbyMock = vi.fn();
 const findInBoundsMock = vi.fn();
 
 vi.mock("../src/infrastructure/postgres-stop-repository.js", () => ({
   PostgresStopRepository: vi.fn().mockImplementation(() => ({
+    findAll: findAllMock,
     findNearby: findNearbyMock,
     findInBounds: findInBoundsMock
   }))
@@ -26,8 +29,10 @@ vi.mock("../src/infrastructure/postgres-stop-repository.js", () => ({
 
 describe("GET /stops", () => {
   beforeEach(() => {
+    findAllMock.mockReset();
     findNearbyMock.mockReset();
     findInBoundsMock.mockReset();
+    findAllMock.mockResolvedValue(mockStops);
     findNearbyMock.mockResolvedValue(mockStops);
     findInBoundsMock.mockResolvedValue(mockStops);
   });
@@ -49,10 +54,12 @@ describe("GET /stops", () => {
     expect(findNearbyMock).toHaveBeenCalledWith(53.27, -9.05, 1000);
   });
 
-  it("returns 400 when coordinates are missing", async () => {
+  it("returns all stops when coordinates are missing", async () => {
     const response = await request(app).get("/stops");
 
-    expect(response.status).toBe(400);
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual(mockStops);
+    expect(findAllMock).toHaveBeenCalled();
   });
 
   it("returns 400 when coordinates are outside valid bounds", async () => {

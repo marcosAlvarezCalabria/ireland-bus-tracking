@@ -7,6 +7,7 @@ interface StopRow {
   name: string;
   lat: string | number;
   lng: string | number;
+  routes: string | null;
   distance: string | number;
 }
 
@@ -20,6 +21,7 @@ export class PostgresStopRepository implements StopRepository {
         name,
         lat,
         lng,
+        routes,
         0 AS distance
       FROM stops
       ORDER BY name ASC
@@ -32,6 +34,7 @@ export class PostgresStopRepository implements StopRepository {
       name: row.name,
       lat: Number(row.lat),
       lng: Number(row.lng),
+      routes: row.routes ?? "",
       distance: Number(row.distance)
     }));
   }
@@ -42,13 +45,14 @@ export class PostgresStopRepository implements StopRepository {
     radiusMeters: number
   ): Promise<Stop[]> {
     const query = `
-      SELECT id, name, lat, lng, distance
+      SELECT id, name, lat, lng, routes, distance
       FROM (
         SELECT
           id,
           name,
           lat,
           lng,
+          routes,
           6371000 * acos(
             cos(radians($1)) * cos(radians(lat)) *
             cos(radians(lng) - radians($2)) +
@@ -72,6 +76,7 @@ export class PostgresStopRepository implements StopRepository {
       name: row.name,
       lat: Number(row.lat),
       lng: Number(row.lng),
+      routes: row.routes ?? "",
       distance: Number(row.distance)
     }));
   }
@@ -88,6 +93,7 @@ export class PostgresStopRepository implements StopRepository {
         name,
         lat,
         lng,
+        routes,
         0 AS distance
       FROM stops
       WHERE lat BETWEEN $1 AND $2
@@ -108,6 +114,7 @@ export class PostgresStopRepository implements StopRepository {
       name: row.name,
       lat: Number(row.lat),
       lng: Number(row.lng),
+      routes: row.routes ?? "",
       distance: Number(row.distance)
     }));
   }

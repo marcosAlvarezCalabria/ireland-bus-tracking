@@ -125,7 +125,7 @@ export function MapView({
           position={[stop.lat, stop.lng]}
         >
           <Tooltip>{stop.name}</Tooltip>
-          <StopPopup stopId={stop.id} />
+          <StopPopup stopId={stop.id} stopName={stop.name} />
         </Marker>
       ))}
       {children}
