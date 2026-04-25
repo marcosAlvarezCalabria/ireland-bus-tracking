@@ -13,6 +13,7 @@ import {
   useMapEvents
 } from "react-leaflet";
 
+import { StopPopup } from "./StopPopup";
 import type { Stop } from "../../types";
 
 delete (L.Icon.Default.prototype as { _getIconUrl?: unknown })._getIconUrl;
@@ -124,6 +125,7 @@ export function MapView({
           position={[stop.lat, stop.lng]}
         >
           <Tooltip>{stop.name}</Tooltip>
+          <StopPopup stopId={stop.id} />
         </Marker>
       ))}
       {children}
