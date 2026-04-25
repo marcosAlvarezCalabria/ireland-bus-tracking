@@ -72,22 +72,20 @@ class GtfsVehicleCache {
     const vehicles: Vehicle[] = [];
 
     for (const entity of feed.entity) {
-      const vehicleId = entity.vehicle?.vehicle?.id ?? entity.id ?? "";
-      const latitude = entity.vehicle?.position?.latitude;
-      const longitude = entity.vehicle?.position?.longitude;
-      const routeId = entity.vehicle?.trip?.routeId ?? "";
-      const bearing = Number(entity.vehicle?.position?.bearing ?? 0);
+      const vehicle = entity.vehicle;
+      const position = vehicle?.position;
+      const trip = vehicle?.trip;
 
-      if (!vehicleId || latitude === undefined || longitude === undefined || !routeId) {
+      if (!vehicle || !position || !trip) {
         continue;
       }
 
       vehicles.push({
-        id: vehicleId,
-        lat: latitude,
-        lng: longitude,
-        routeId,
-        bearing
+        id: vehicle.vehicle?.id ?? "",
+        lat: position.latitude,
+        lng: position.longitude,
+        routeId: trip.routeId ?? "",
+        bearing: Number(position.bearing ?? 0)
       });
     }
 
