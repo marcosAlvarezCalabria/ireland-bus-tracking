@@ -15,21 +15,34 @@ function formatArrivalTime(value: string): string {
   }).format(new Date(value));
 }
 
-function getStatusBadgeClass(status: Arrival["status"]): string {
+function getDelayClass(status: Arrival["status"]): string {
   if (status === "on_time") {
-    return "bg-green-100 text-green-800";
+    return "text-green-700";
   }
 
   if (status === "delayed") {
-    return "bg-red-100 text-red-800";
+    return "text-red-700";
   }
 
-  return "bg-blue-100 text-blue-800";
+  return "text-blue-700";
+}
+
+function formatDelay(arrival: Arrival): string {
+  if (arrival.status === "on_time") {
+    return "on time";
+  }
+
+  const delayMinutes = Math.round(arrival.delaySeconds / 60);
+
+  if (arrival.status === "delayed") {
+    return `+${delayMinutes} min`;
+  }
+
+  return `${delayMinutes} min`;
 }
 
 export function StopPopup({ stopId, stopName }: StopPopupProps) {
   const { arrivals, loading, error } = useArrivals(stopId);
-  const [nextArrival, ...remainingArrivals] = arrivals;
 
   return (
     <Popup minWidth={280}>
@@ -56,66 +69,53 @@ export function StopPopup({ stopId, stopName }: StopPopupProps) {
           <p className="text-sm text-slate-600">No upcoming buses</p>
         ) : null}
 
-        {!loading && !error && nextArrival ? (
-          <div className="space-y-2">
-            <article className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                Next bus
-              </p>
-              <div className="mt-2 flex items-end justify-between gap-3">
-                <div>
-                  <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
-                    Route
-                  </p>
-                  <p className="text-2xl font-bold text-slate-900">
-                    {nextArrival.routeId}
-                  </p>
+        {!loading && !error && arrivals.length > 0 ? (
+          <ul className="space-y-2">
+            {arrivals.map((arrival) => (
+              <li
+                className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm"
+                key={`${arrival.tripId}-${arrival.predictedArrival}`}
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                      Route
+                    </p>
+                    <p className="text-lg font-bold text-slate-900">
+                      {arrival.routeId}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                      Scheduled
+                    </p>
+                    <p className="text-sm font-semibold text-slate-700">
+                      {formatArrivalTime(arrival.scheduledArrival)}
+                    </p>
+                  </div>
                 </div>
-                <div className="text-right">
-                  <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">
-                    Arrives
-                  </p>
-                  <p className="text-2xl font-bold text-slate-900">
-                    {formatArrivalTime(nextArrival.predictedArrival)}
-                  </p>
-                </div>
-              </div>
-              <div className="mt-3">
-                <span
-                  className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${getStatusBadgeClass(nextArrival.status)}`}
-                >
-                  {nextArrival.status.replace("_", " ")}
-                </span>
-              </div>
-            </article>
 
-            {remainingArrivals.length > 0 ? (
-              <ul className="space-y-2">
-                {remainingArrivals.map((arrival) => (
-                  <li
-                    className="rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm"
-                    key={`${arrival.tripId}-${arrival.predictedArrival}`}
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="text-sm font-semibold text-slate-900">
-                        {arrival.routeId}
-                      </p>
-                      <p className="text-sm font-semibold text-slate-900">
-                        {formatArrivalTime(arrival.predictedArrival)}
-                      </p>
-                    </div>
-                    <div className="mt-2">
-                      <span
-                        className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${getStatusBadgeClass(arrival.status)}`}
-                      >
-                        {arrival.status.replace("_", " ")}
-                      </span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-          </div>
+                <div className="mt-3 flex items-end justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                      Delay
+                    </p>
+                    <p className={`text-sm font-semibold ${getDelayClass(arrival.status)}`}>
+                      {formatDelay(arrival)}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                      Predicted
+                    </p>
+                    <p className="text-lg font-bold text-slate-900">
+                      {formatArrivalTime(arrival.predictedArrival)}
+                    </p>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
         ) : null}
       </div>
     </Popup>

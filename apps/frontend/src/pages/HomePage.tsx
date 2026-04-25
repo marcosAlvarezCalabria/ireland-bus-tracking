@@ -18,7 +18,7 @@ export function HomePage() {
   const normalizedRouteQuery = routeQuery.trim().toLowerCase();
   const filteredStops =
     normalizedRouteQuery.length === 0
-      ? stops
+      ? []
       : stops.filter((stop) =>
           stop.routes
             .map((route) => route.trim().toLowerCase())
@@ -26,16 +26,11 @@ export function HomePage() {
         );
   const filteredVehicles =
     normalizedRouteQuery.length === 0
-      ? vehicles
-      : vehicles.filter((vehicle) => {
-          const routeId = vehicle.routeId.trim().toLowerCase();
-          const routeShortName = vehicle.routeShortName.trim().toLowerCase();
-
-          return (
-            routeId === normalizedRouteQuery ||
-            routeShortName === normalizedRouteQuery
-          );
-        });
+      ? []
+      : vehicles.filter(
+          (vehicle) =>
+            vehicle.routeShortName.trim().toLowerCase() === normalizedRouteQuery
+        );
 
   useEffect(() => {
     void getStops()
@@ -104,14 +99,14 @@ export function HomePage() {
               className="mb-2 block text-xs font-semibold uppercase tracking-[0.2em] text-slate-500"
               htmlFor="route-filter"
             >
-              Filter by route
+              Buscar ruta
             </label>
             <div className="flex items-center gap-2">
               <input
                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none ring-0 transition placeholder:text-slate-400 focus:border-slate-500 dark:border-slate-700 dark:bg-slate-950 dark:text-white"
                 id="route-filter"
                 onChange={(event) => setRouteQuery(event.target.value)}
-                placeholder='Try "401"'
+                placeholder="¿Qué bus quieres coger? Ej: 401"
                 value={routeQuery}
               />
               {normalizedRouteQuery.length > 0 ? (
